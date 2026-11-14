@@ -11,7 +11,7 @@ Sistem *Retrieval-Augmented Generation* (RAG) untuk layanan konsultasi gizi medi
 | **Bahasa Pemrograman** | Python 3.10+, TypeScript (Deno) |
 | **Backend / Serverless** | Supabase Edge Functions |
 | **Basis Data Vektor** | PostgreSQL dengan ekstensi `pgvector` |
-| **Model LLM** | Gemini 2.5 Flash |
+| **Model LLM** | Google Gemini 3 Flash Preview (`gemini-3-flash-preview`) |
 | **Model Embedding** | IndoBERT (`firqaaa/indo-sentence-bert-base`), Gemini Embedding |
 | **Model Reranker** | BAAI/bge-reranker-v2-m3 (Cross-Encoder) |
 | **Metode Retrieval** | Hybrid Search (Vector + Full-Text) & Reciprocal Rank Fusion (RRF) |
