@@ -10,7 +10,6 @@ import requests
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-# KONFIGURASI EVALUASI
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY")
 OPENAI_MODEL = "gpt-4o"
 
@@ -115,7 +114,6 @@ def clean_response_text(text: str) -> str:
             cleaned = cleaned.split(marker)[0]
     return cleaned.strip()
 
-# METRIK EVALUASI RAGAS
 def evaluate_faithfulness(question: str, answer: str, context: str) -> float:
     if not context or not answer:
         return 0.0
@@ -220,7 +218,6 @@ Keluarkan HANYA JSON:
         raw_score = 0.0
     return raw_score / 2.0
 
-# 3. HELPER UNTUK MEMASTIKAN 75 DATA DI DATABASE 100% LENGKAP
 def get_auth_token():
     admin_headers = {
         "apikey": SERVICE_ROLE_KEY,
@@ -243,7 +240,7 @@ def get_auth_token():
     return verify_res.json().get("access_token")
 
 def ensure_all_75_telemetry_ready(master_meta: list) -> list:
-    print("[FASE 1/2] Memeriksa kelengkapan 75 data pengujian di database...", flush=True)
+    print("Memeriksa kelengkapan data telemetri di database...", flush=True)
     meta_by_id = {v["scenario_id"]: v for v in master_meta}
     target_modes = ["advanced", "post_retrieval", "pre_retrieval", "naive", "none"]
 
@@ -285,8 +282,7 @@ def ensure_all_75_telemetry_ready(master_meta: list) -> list:
                 missing_runs.append((vid, mode, v_info))
 
     if missing_runs:
-        print(f"-> Ditemukan {len(missing_runs)} konfigurasi yang belum di-run / ada perubahan kueri.", flush=True)
-        print("-> Menjalankan auto-run ke Edge Function Supabase sekarang...\n", flush=True)
+        print(f"Mengambil {len(missing_runs)} data konfigurasi yang belum tersedia...\n", flush=True)
         token = get_auth_token()
         client_headers = {
             "Content-Type": "application/json",
@@ -296,7 +292,7 @@ def ensure_all_75_telemetry_ready(master_meta: list) -> list:
 
         for vid, mode, v_info in missing_runs:
             q = v_info["query_text_part"].strip()
-            print(f"   [AUTO-RUN] {vid} ({mode})...", end="", flush=True)
+            print(f"   {vid} ({mode})...", end="", flush=True)
             payload = {
                 "action": "chatbot",
                 "userMessage": q,
@@ -326,24 +322,19 @@ def ensure_all_75_telemetry_ready(master_meta: list) -> list:
             except Exception as e:
                 print(f" [ERROR: {e}]", flush=True)
 
-    print(f"\n[OK] 75/75 data pengujian resmi siap dievaluasi RAGAS!\n", flush=True)
+    print("\nData pengujian siap dievaluasi.\n", flush=True)
     out_path = "data/vignettes_v10.0_consolidated_dataset.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
-    # Simpan juga ke path data untuk kompatibilitas
     with open("data/vignettes_v10_consolidated_dataset.json", "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
     return dataset
 
-# FUNGSI UTAMA EKSEKUSI RAGAS
 def main():
-    print("=" * 75, flush=True)
-    print("         EVALUASI MASTER RAGAS: 75 RUNS (15 CLINICAL VIGNETTES)")
-    print("=" * 75, flush=True)
-    print(f"Judge Evaluator        : {OPENAI_MODEL} (GPT-4o)")
-    print(f"Embedding Evaluator    : text-embedding-3-small")
-    print(f"Cakupan Evaluasi       : 15 Skenario (V01 - V15) x 5 Mode RAG = 75 Konfigurasi")
-    print("=" * 75 + "\n", flush=True)
+    print("=" * 60)
+    print("Evaluasi RAGAS (15 Clinical Vignettes x 5 Mode)")
+    print(f"Evaluator: {OPENAI_MODEL} | Embedding: text-embedding-3-small")
+    print("=" * 60 + "\n")
 
     master_path = "data/vignettes_master_v10.0.json"
     if not os.path.exists(master_path):
@@ -351,7 +342,6 @@ def main():
     with open(master_path, "r", encoding="utf-8") as f:
         master_meta = json.load(f)
 
-    # 1. Pastikan seluruh 75 data siap
     dataset = ensure_all_75_telemetry_ready(master_meta)
 
     # Indeks dataset berdasarkan (mode, scenario_id)
@@ -423,13 +413,11 @@ def main():
             all_evaluated.append(eval_rec)
             print(f"[{sc}] ({sc_type.upper():<8}) ({evaluated_count:2d}/{total_to_eval}) in {elapsed:.1f}s | F: {f_val:.4f} | AR: {ar_val:.4f} | CR: {cr_val:.4f} | RAGAS: {ragas_val:.4f}", flush=True)
 
-            # Auto-save progress
-            pd.DataFrame(all_evaluated).to_csv("scripts/ragas_evaluation_results.csv", index=False)
+            pd.DataFrame(all_evaluated).to_csv("data/ragas_evaluation_results.csv", index=False)
             time.sleep(0.3)
 
     total_duration = time.time() - start_eval_time
 
-    # Buat summary per mode
     df_detail = pd.DataFrame(all_evaluated)
     summary_by_mode = []
     for m_key, m_label in MODES:
@@ -461,23 +449,13 @@ def main():
     csv_latest_path = "data/hasil_evaluasi_ragas.csv"
     md_latest_path = "data/ringkasan_evaluasi.md"
 
-    with open(csv_latest_path, "w", encoding="utf-8") as f:
-        f.write("# ======================================================================\n")
-        f.write("# RINGKASAN EVALUASI RAGAS V10.0 (RATA-RATA 5 MODE ARSITEKTUR DENGAN GPT-4o)\n")
-        f.write("# ======================================================================\n")
-        df_summary.to_csv(f, index=False)
-        f.write("\n# ======================================================================\n")
-        f.write("# HASIL LENGKAP EVALUASI RAGAS V10.0 PER SKENARIO (75 ENTRI RESMI)\n")
-        f.write("# ======================================================================\n")
-        df_detail.to_csv(f, index=False)
-
-    # Simpan juga ke file bernomor versi v10.0 eksplisit
+    df_detail.to_csv(csv_latest_path, index=False)
     df_detail.to_csv("data/ragas_evaluation_results_v10.0.csv", index=False)
 
     with open(md_latest_path, "w", encoding="utf-8") as f:
-        f.write("# Laporan Hasil Evaluasi RAGAS v10.0 (10 Eksplisit + 5 Implisit)\n\n")
-        f.write(f"Evaluasi resmi seluruh 75 konfigurasi v10.0 menggunakan **Judge GPT-4o** dan **text-embedding-3-small**.\n")
-        f.write(f"Waktu eksekusi: {time.strftime('%Y-%m-%d %H:%M:%S')} (Total durasi: {total_duration/60:.1f} menit).\n\n")
+        f.write("# Laporan Hasil Evaluasi RAGAS (10 Eksplisit + 5 Implisit)\n\n")
+        f.write(f"Evaluasi 75 konfigurasi menggunakan **Judge GPT-4o** dan **text-embedding-3-small**.\n")
+        f.write(f"Waktu eksekusi: {time.strftime('%Y-%m-%d %H:%M:%S')} (Durasi: {total_duration/60:.1f} menit).\n\n")
         f.write("---\n\n")
         f.write("## 1. Ringkasan Eksekutif (Rata-rata 5 Mode Arsitektur)\n\n")
         f.write("| Mode Arsitektur | Faithfulness | Answer Relevance | Context Relevance | RAGAS (Eksplisit n=10) | RAGAS (Implisit n=5) | Rata-rata RAGAS (Total) |\n")
@@ -491,16 +469,10 @@ def main():
         for _, r in df_detail.iterrows():
             f.write(f"| `{r['mode']}` | {r['mode_label']} | **{r['scenario_id']}** | {r['scenario_type']} | {r['faithfulness']:.4f} | {r['answer_relevance']:.4f} | {r['context_relevance']:.4f} | **{r['ragas_score']:.4f}** |\n")
 
-    print("\n" + "=" * 75, flush=True)
-    print("                    RINGKASAN HASIL EVALUASI RAGAS V10.0", flush=True)
-    print("=" * 75, flush=True)
-    print(df_summary.to_string(index=False), flush=True)
-    print("=" * 75, flush=True)
-    print(f"\n[SELESAI DALAM {total_duration/60:.1f} MENIT! FILE LAPORAN DISIMPAN]:", flush=True)
-    print(f"  - Markdown Rapi : {md_latest_path}", flush=True)
-    print(f"  - CSV Lengkap   : {csv_latest_path}", flush=True)
-    print(f"  - CSV Detail    : {csv_detail_path}", flush=True)
-    print(f"  - CSV V10.0     : scripts/ragas_evaluation_results_v10.0.csv", flush=True)
+    print("\nRingkasan Hasil Evaluasi:")
+    print(df_summary.to_string(index=False))
+    print(f"\nSelesai dalam {total_duration/60:.1f} menit.")
+    print(f"Hasil disimpan di: {csv_latest_path} dan {md_latest_path}")
 
 if __name__ == "__main__":
     main()

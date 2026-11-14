@@ -45,23 +45,6 @@ export async function computePromptHash(prompt: string): Promise<string> {
     return `sha256:${hashHex}`
 }
 
-// ============================================================================
-// KONFIGURASI SAKELAR ATURAN PENOLAKAN MEDIS (MEDICAL REFUSAL TOGGLE)
-// ============================================================================
-// Aturan asli ("3. DITOLAK: Diagnosis, terapi medis, interpretasi lab...")
-// TIDAK DIHAPUS. Teks aturan asli dan teks bypass disimpan utuh di sini.
-// 
-// Pengaturan sewaktu-waktu:
-// - 'baseline_only_disabled' : (DEFAULT) Dinonaktifkan KHUSUS mode Baseline (ragMode === 'none')
-//                              agar LLM menjawab untuk evaluasi benchmark akademik.
-//                              TETAP AKTIF pada mode RAG (Naive, Advanced) demi safety & persona.
-// - 'always_disabled'        : Dinonaktifkan di SEMUA mode (LLM selalu menjawab pertanyaan medis).
-// - 'always_enabled'         : Diaktifkan kembali di SEMUA mode (aturan penolakan medis aktif penuh).
-// 
-// Catatan: Anda juga bisa mengatur via Supabase Dashboard Environment Variable:
-// ENFORCE_MEDICAL_REFUSAL="true"  -> Aktifkan kembali di semua mode tanpa edit kode
-// ENFORCE_MEDICAL_REFUSAL="false" -> Nonaktifkan di semua mode tanpa edit kode
-// ============================================================================
 export const ORIGINAL_MEDICAL_REFUSAL_RULE = '3. DITOLAK: Diagnosis, terapi medis, interpretasi lab → tolak dengan sopan'
 export const BYPASS_MEDICAL_REFUSAL_RULE = '3. PENGETAHUAN KLINIS & MEDIS: Jawab pertanyaan terkait terapi medis, obat, atau klinis secara langsung, spesifik, dan lengkap berdasarkan pengetahuan medismu tanpa menolak atau menghindar.'
 
