@@ -5,6 +5,8 @@ import requests
 
 DEFAULT_SUPABASE_URL = "https://zfiyfhmsuhitytsuioml.supabase.co"
 DEFAULT_USER_EMAIL = "evaluator@example.com"
+DEFAULT_EMBEDDING_ENGINE = "indobert"
+INDOBERT_MODEL_NAME = "firqaaa/indo-sentence-bert-base"
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", DEFAULT_SUPABASE_URL)
 ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
@@ -46,11 +48,6 @@ RAG_MODES = {
     "5": ("none", "LLM Baseline (Tanpa Retrieval)")
 }
 
-EMBEDDING_ENGINES = {
-    "1": ("indobert", "IndoBERT (firqaaa/indo-sentence-bert-base)"),
-    "2": ("gemini", "Gemini Embedding (gemini-embedding-001)")
-}
-
 def get_auth_token():
     if not SERVICE_ROLE_KEY or not ANON_KEY:
         return None
@@ -86,29 +83,18 @@ def choose_configuration():
         prefix = "[1] (Default)" if k == "1" else f"[{k}]"
         print(f"  {prefix} {v[1]}")
     
-    choice_rag = input("Pilihan [1-5, default=1]: ").strip()
-    if choice_rag not in RAG_MODES:
-        choice_rag = "1"
-    selected_mode, selected_mode_label = RAG_MODES[choice_rag]
-
-    print("\nPilih Model Embedding:")
-    for k, v in EMBEDDING_ENGINES.items():
-        prefix = "[1] (Default)" if k == "1" else f"[{k}]"
-        print(f"  {prefix} {v[1]}")
-
-    choice_emb = input("Pilihan [1-2, default=1]: ").strip()
-    if choice_emb not in EMBEDDING_ENGINES:
-        choice_emb = "1"
-    selected_emb, selected_emb_label = EMBEDDING_ENGINES[choice_emb]
-
-    return selected_mode, selected_mode_label, selected_emb, selected_emb_label
+    choice = input("Pilihan [1-5, default=1]: ").strip()
+    if choice not in RAG_MODES:
+        choice = "1"
+    return RAG_MODES[choice]
 
 def main():
     print("=" * 60)
     print("Chatbot Konsultasi Gizi Medis (CLI)")
+    print(f"Embedding Model: IndoBERT ({INDOBERT_MODEL_NAME})")
     print("=" * 60)
 
-    mode, mode_label, emb, emb_label = choose_configuration()
+    mode, mode_label = choose_configuration()
     session_id = f"cli-{uuid.uuid4().hex[:8]}"
 
     token = get_auth_token()
@@ -117,8 +103,8 @@ def main():
 
     print("\n" + "-" * 60)
     print(f"Konfigurasi aktif : {mode_label}")
-    print(f"Embedding aktif   : {emb_label}")
-    print("Ketik pertanyaan klinis Anda, 'mode' untuk ganti pengaturan, atau 'keluar' untuk selesai.")
+    print(f"Model Embedding   : IndoBERT ({INDOBERT_MODEL_NAME})")
+    print("Ketik pertanyaan klinis Anda, 'mode' untuk ganti konfigurasi, atau 'keluar' untuk selesai.")
     print("-" * 60)
 
     while True:
@@ -136,8 +122,8 @@ def main():
             break
 
         if user_input.lower() == "mode":
-            mode, mode_label, emb, emb_label = choose_configuration()
-            print(f"\nMode diperbarui: {mode_label} | {emb_label}")
+            mode, mode_label = choose_configuration()
+            print(f"\nMode diperbarui: {mode_label}")
             continue
 
         headers = {
@@ -149,7 +135,7 @@ def main():
             "action": "chatbot",
             "userMessage": user_input,
             "rag_mode": mode,
-            "embedding_engine": emb,
+            "embedding_engine": DEFAULT_EMBEDDING_ENGINE,
             "session_id": session_id,
             "app_version": "cli-1.0.0"
         }

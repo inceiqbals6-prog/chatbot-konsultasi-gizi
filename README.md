@@ -12,7 +12,7 @@ Sistem *Retrieval-Augmented Generation* (RAG) untuk layanan konsultasi gizi medi
 | **Backend / Serverless** | Supabase Edge Functions |
 | **Basis Data Vektor** | PostgreSQL dengan ekstensi `pgvector` |
 | **Model LLM** | Google Gemini 3 Flash Preview (`gemini-3-flash-preview`) |
-| **Model Embedding** | IndoBERT (`firqaaa/indo-sentence-bert-base`), Gemini Embedding |
+| **Model Embedding** | IndoBERT (`firqaaa/indo-sentence-bert-base`) |
 | **Model Reranker** | BAAI/bge-reranker-v2-m3 (Cross-Encoder) |
 | **Metode Retrieval** | Hybrid Search (Vector + Full-Text) & Reciprocal Rank Fusion (RRF) |
 | **Framework Evaluasi** | RAGAS (Faithfulness, Context Relevance, Answer Relevance) |
@@ -59,10 +59,9 @@ Untuk menguji chatbot langsung melalui terminal:
 python main.py
 ```
 Pada saat dijalankan, pengguna dapat:
-- Memilih konfigurasi arsitektur RAG (Full Advanced RAG, Post-Retrieval Only, Pre-Retrieval Only, Naive RAG, atau LLM Baseline).
-- Memilih model embedding (IndoBERT atau Gemini Embedding).
-- Mengetikkan pertanyaan konsultasi gizi secara bebas.
-- Mengetik `mode` untuk mengganti konfigurasi, atau `keluar` untuk selesai.
+- Memilih konfigurasi arsitektur RAG yang ingin diuji (Full Advanced RAG, Post-Retrieval Only, Pre-Retrieval Only, Naive RAG, atau LLM Baseline).
+- Mengetikkan pertanyaan konsultasi gizi secara bebas (sistem secara default menggunakan embedding IndoBERT).
+- Mengetik `mode` untuk mengganti konfigurasi RAG, atau `keluar` untuk selesai.
 
 ### 3. Menjalankan Skrip Evaluasi Eksperimen
 Untuk menjalankan pengujian otomatis terhadap skenario klinis dan menghitung metrik evaluasi RAGAS:
