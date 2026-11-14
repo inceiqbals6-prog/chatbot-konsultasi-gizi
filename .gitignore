@@ -29,3 +29,15 @@ jurnal/
 .vscode/
 **/.vscode/
 **/.idea/
+
+# Legacy project assets & datasets (outside TA Chatbot scope)
+Food Images/
+**/Food Images/
+Web/
+.vercelignore
+olah_resep_chefgenius.py
+resep_bersih_psql_quote_all.csv
+resep_sampel_kecil.csv
+Food Ingredients and Recipe Dataset*.csv
+**/dataset/
+
