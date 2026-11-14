@@ -29,6 +29,9 @@ jurnal/
 .vscode/
 **/.vscode/
 **/.idea/
+CHATBOT_*.md
+RAGAS_*.md
+
 
 # Legacy project assets & datasets (outside TA Chatbot scope)
 Food Images/
@@ -40,4 +43,8 @@ resep_bersih_psql_quote_all.csv
 resep_sampel_kecil.csv
 Food Ingredients and Recipe Dataset*.csv
 **/dataset/
+
+# Mobile Flutter UI
+Mobile/
+
 
