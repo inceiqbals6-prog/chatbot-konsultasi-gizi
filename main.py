@@ -228,25 +228,6 @@ def main():
                 data = resp.json()
                 answer = data.get("result", "Tidak ada respon teks.")
                 print(f"\nChatbot:\n{answer}")
-
-                # Tampilkan dokumen konteks terambil dari telemetri jika tersedia
-                run_id = data.get("run_id")
-                if SERVICE_ROLE_KEY and run_id and mode != "none":
-                    try:
-                        r_tel = requests.get(
-                            f"{SUPABASE_URL}/rest/v1/chatbot_telemetry?run_id=eq.{run_id}",
-                            headers={"apikey": SERVICE_ROLE_KEY, "Authorization": f"Bearer {SERVICE_ROLE_KEY}"},
-                            timeout=5
-                        )
-                        if r_tel.status_code == 200 and r_tel.json():
-                            retrieved = r_tel.json()[0].get("retrieved_results") or []
-                            if retrieved:
-                                print("\n[Dokumen Konteks Terambil (Top-3)]:")
-                                for idx, r in enumerate(retrieved[:3], 1):
-                                    sim = f" (Similarity: {r['similarity_score']:.3f})" if r.get('similarity_score') else ""
-                                    print(f"  {idx}. {r.get('title', 'Dokumen')} #{r.get('chunk_id', '')}{sim}")
-                    except Exception:
-                        pass
             else:
                 print(f"\nError {resp.status_code}: {resp.text[:200]}")
         except requests.exceptions.Timeout:
