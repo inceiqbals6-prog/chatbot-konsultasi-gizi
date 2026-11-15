@@ -159,6 +159,12 @@ def main():
     print(f"Embedding Engine: IndoBERT ({INDOBERT_MODEL_NAME})")
     print("=" * 60)
 
+    if not ANON_KEY:
+        print("\n[PERINGATAN] Berkas .env atau SUPABASE_ANON_KEY belum dikonfigurasi.")
+        print("Silakan buat berkas .env (contoh: salin dari .env.example) dan isi kredensial Supabase Anda.")
+        print("Program dihentikan untuk mencegah akses tidak sah ke kuota API.")
+        return
+
     mode, mode_label = choose_configuration()
     session_id = f"cli-{uuid.uuid4().hex[:8]}"
 

@@ -53,7 +53,13 @@ Pastikan Python 3.10+ telah terpasang di komputer Anda. Pasang pustaka yang dipe
 pip install -r requirements.txt
 ```
 
-### 2. Menjalankan Chatbot Interaktif (Kueri Bebas)
+### 2. Konfigurasi Kredensial (.env)
+Salin berkas template lingkungan dan lengkapi kredensial akses Supabase:
+```bash
+cp .env.example .env
+```
+
+### 3. Menjalankan Chatbot Interaktif (Kueri Bebas)
 Untuk menguji chatbot langsung melalui terminal:
 ```bash
 python main.py
@@ -63,7 +69,7 @@ Pada saat dijalankan, pengguna dapat:
 - Mengetikkan pertanyaan konsultasi gizi secara bebas (sistem secara default menggunakan embedding IndoBERT).
 - Mengetik `mode` untuk mengganti konfigurasi RAG, atau `keluar` untuk selesai.
 
-### 3. Menjalankan Skrip Evaluasi Eksperimen
+### 4. Menjalankan Skrip Evaluasi Eksperimen
 Untuk menjalankan pengujian otomatis terhadap skenario klinis dan menghitung metrik evaluasi RAGAS:
 ```bash
 python evaluasi.py
