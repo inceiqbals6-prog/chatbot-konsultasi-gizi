@@ -1,6 +1,26 @@
 import os
 import sys
 import uuid
+import warnings
+import logging
+import threading
+
+# Hilangkan log, peringatan unauthenticated HF Hub, dan progress bar transformers
+threading.excepthook = lambda args: None
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+warnings.filterwarnings("ignore")
+logging.getLogger("transformers").setLevel(logging.ERROR)
+logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
+
+try:
+    from transformers import logging as tf_logging
+    tf_logging.set_verbosity_error()
+except Exception:
+    pass
+
 import requests
 
 DEFAULT_SUPABASE_URL = "https://zfiyfhmsuhitytsuioml.supabase.co"
@@ -49,9 +69,6 @@ def init_indobert():
     if _indobert_available is not None:
         return _indobert_available
     try:
-        import threading
-        threading.excepthook = lambda args: None
-        os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
         import torch
         from transformers import AutoTokenizer, AutoModel
 
