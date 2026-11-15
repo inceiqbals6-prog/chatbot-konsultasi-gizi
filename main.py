@@ -40,6 +40,54 @@ def load_local_env():
 
 load_local_env()
 
+_indobert_tokenizer = None
+_indobert_model = None
+_indobert_available = None
+
+def init_indobert():
+    global _indobert_tokenizer, _indobert_model, _indobert_available
+    if _indobert_available is not None:
+        return _indobert_available
+    try:
+        import threading
+        threading.excepthook = lambda args: None
+        os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+        import torch
+        from transformers import AutoTokenizer, AutoModel
+
+        print("Memuat model IndoBERT (firqaaa/indo-sentence-bert-base)...", end=" ", flush=True)
+        try:
+            _indobert_tokenizer = AutoTokenizer.from_pretrained(INDOBERT_MODEL_NAME, local_files_only=True)
+            _indobert_model = AutoModel.from_pretrained(INDOBERT_MODEL_NAME, local_files_only=True)
+        except Exception:
+            _indobert_tokenizer = AutoTokenizer.from_pretrained(INDOBERT_MODEL_NAME)
+            _indobert_model = AutoModel.from_pretrained(INDOBERT_MODEL_NAME)
+
+        _indobert_model.eval()
+        _indobert_available = True
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"[Siap - {device.upper()}]")
+    except Exception as e:
+        _indobert_available = False
+        print(f"[Offline fallback aktif: {e}]")
+    return _indobert_available
+
+def get_indobert_embedding(text: str):
+    if not init_indobert():
+        return None
+    try:
+        import torch
+        import torch.nn.functional as F
+        enc = _indobert_tokenizer([str(text)], padding=True, truncation=True, max_length=512, return_tensors='pt')
+        with torch.no_grad():
+            out = _indobert_model(**enc)
+        mask = enc['attention_mask'].unsqueeze(-1).expand(out[0].size()).float()
+        mean_pooled = torch.sum(out[0] * mask, 1) / torch.clamp(mask.sum(1), min=1e-9)
+        emb = F.normalize(mean_pooled, p=2, dim=1)[0].tolist()
+        return emb
+    except Exception:
+        return None
+
 RAG_MODES = {
     "1": ("advanced", "Full Advanced RAG (Query Rewriting + Hybrid RRF + BGE Reranker)"),
     "2": ("post_retrieval", "Post-Retrieval Only (BGE Cross-Encoder Reranker)"),
@@ -91,7 +139,7 @@ def choose_configuration():
 def main():
     print("=" * 60)
     print("Chatbot Konsultasi Gizi Medis (CLI)")
-    print(f"Embedding Model: IndoBERT ({INDOBERT_MODEL_NAME})")
+    print(f"Embedding Engine: IndoBERT ({INDOBERT_MODEL_NAME})")
     print("=" * 60)
 
     mode, mode_label = choose_configuration()
@@ -106,6 +154,10 @@ def main():
     print(f"Model Embedding   : IndoBERT ({INDOBERT_MODEL_NAME})")
     print("Ketik pertanyaan klinis Anda, 'mode' untuk ganti konfigurasi, atau 'keluar' untuk selesai.")
     print("-" * 60)
+
+    # Inisialisasi model IndoBERT di awal jika mode membutuhkan retrieval
+    if mode != "none":
+        init_indobert()
 
     while True:
         try:
@@ -124,7 +176,13 @@ def main():
         if user_input.lower() == "mode":
             mode, mode_label = choose_configuration()
             print(f"\nMode diperbarui: {mode_label}")
+            if mode != "none":
+                init_indobert()
             continue
+
+        query_emb = None
+        if mode != "none":
+            query_emb = get_indobert_embedding(user_input)
 
         headers = {
             "apikey": ANON_KEY,
@@ -139,6 +197,8 @@ def main():
             "session_id": session_id,
             "app_version": "cli-1.0.0"
         }
+        if query_emb:
+            payload["query_embedding"] = query_emb
 
         try:
             resp = requests.post(
@@ -151,6 +211,25 @@ def main():
                 data = resp.json()
                 answer = data.get("result", "Tidak ada respon teks.")
                 print(f"\nChatbot:\n{answer}")
+
+                # Tampilkan dokumen konteks terambil dari telemetri jika tersedia
+                run_id = data.get("run_id")
+                if SERVICE_ROLE_KEY and run_id and mode != "none":
+                    try:
+                        r_tel = requests.get(
+                            f"{SUPABASE_URL}/rest/v1/chatbot_telemetry?run_id=eq.{run_id}",
+                            headers={"apikey": SERVICE_ROLE_KEY, "Authorization": f"Bearer {SERVICE_ROLE_KEY}"},
+                            timeout=5
+                        )
+                        if r_tel.status_code == 200 and r_tel.json():
+                            retrieved = r_tel.json()[0].get("retrieved_results") or []
+                            if retrieved:
+                                print("\n[Dokumen Konteks Terambil (Top-3)]:")
+                                for idx, r in enumerate(retrieved[:3], 1):
+                                    sim = f" (Similarity: {r['similarity_score']:.3f})" if r.get('similarity_score') else ""
+                                    print(f"  {idx}. {r.get('title', 'Dokumen')} #{r.get('chunk_id', '')}{sim}")
+                    except Exception:
+                        pass
             else:
                 print(f"\nError {resp.status_code}: {resp.text[:200]}")
         except requests.exceptions.Timeout:
