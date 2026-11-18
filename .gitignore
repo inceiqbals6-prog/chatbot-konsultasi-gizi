@@ -32,6 +32,8 @@ jurnal/
 **/.idea/
 CHATBOT_*.md
 RAGAS_*.md
+LAMPIRAN*.md
+*lampiran*
 
 
 # Legacy project assets & datasets (outside TA Chatbot scope)
