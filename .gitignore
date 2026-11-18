@@ -34,6 +34,9 @@ CHATBOT_*.md
 RAGAS_*.md
 LAMPIRAN*.md
 *lampiran*
+*evaluasi*
+HASIL_EVALUASI*
+*.jsonl
 
 
 # Legacy project assets & datasets (outside TA Chatbot scope)
