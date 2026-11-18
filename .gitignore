@@ -35,7 +35,9 @@ RAGAS_*.md
 LAMPIRAN*.md
 *lampiran*
 *evaluasi*
-HASIL_EVALUASI*
+*kueri*
+*checkpoint*
+HASIL_*
 *.jsonl
 
 
