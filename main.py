@@ -7,6 +7,8 @@ import threading
 
 # Hilangkan log, peringatan unauthenticated HF Hub, dan progress bar transformers
 threading.excepthook = lambda args: None
+os.environ["HF_HUB_VERBOSITY"] = "error"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -18,6 +20,12 @@ logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 try:
     from transformers import logging as tf_logging
     tf_logging.set_verbosity_error()
+except Exception:
+    pass
+
+try:
+    from huggingface_hub.utils import logging as hf_logging
+    hf_logging.set_verbosity_error()
 except Exception:
     pass
 
